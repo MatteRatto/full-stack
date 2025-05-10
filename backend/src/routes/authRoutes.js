@@ -8,7 +8,7 @@ const {
 } = require("../controllers/authController");
 
 const { protect } = require("../middleware/auth");
-const { validateRegister, validateLogin } = require("../utils/validators");
+const { validateRegister, validateLogin } = require("../utils/validator");
 
 router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
