@@ -32,24 +32,43 @@ export const profileUpdateSchema = z
     name: z
       .string()
       .min(2, { message: "Il nome deve essere di almeno 2 caratteri" })
-      .optional(),
+      .optional()
+      .or(z.literal("")),
     email: z
       .string()
       .email({ message: "Inserisci un'email valida" })
-      .optional(),
-    currentPassword: z.string().optional(),
+      .optional()
+      .or(z.literal("")),
+    currentPassword: z.string().optional().or(z.literal("")),
     newPassword: z
       .string()
-      .min(6, { message: "La password deve essere di almeno 6 caratteri" })
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-        message:
-          "La password deve contenere almeno una lettera maiuscola, una minuscola e un numero",
-      })
-      .optional(),
+      .optional()
+      .or(z.literal(""))
+      .refine(
+        (val) => {
+          if (!val || val === "") return true;
+          return val.length >= 6;
+        },
+        { message: "La password deve essere di almeno 6 caratteri" }
+      )
+      .refine(
+        (val) => {
+          if (!val || val === "") return true;
+          return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(val);
+        },
+        {
+          message:
+            "La password deve contenere almeno una lettera maiuscola, una minuscola e un numero",
+        }
+      ),
   })
   .refine(
     (data) => {
-      if (data.newPassword && !data.currentPassword) {
+      if (
+        data.newPassword &&
+        data.newPassword !== "" &&
+        (!data.currentPassword || data.currentPassword === "")
+      ) {
         return false;
       }
       return true;

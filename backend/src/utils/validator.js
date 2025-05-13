@@ -74,13 +74,14 @@ const validateProfileUpdate = [
     .normalizeEmail(),
 
   body("currentPassword")
-    .if(body("newPassword").exists())
+    .if(body("newPassword").exists().not().isEmpty())
     .not()
     .isEmpty()
     .withMessage("La password attuale è obbligatoria per cambiarla"),
 
   body("newPassword")
     .optional()
+    .if(body("newPassword").exists().not().isEmpty())
     .isLength({ min: 6 })
     .withMessage("La password deve essere di almeno 6 caratteri")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)

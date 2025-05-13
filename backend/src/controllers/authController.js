@@ -130,6 +130,77 @@ const getMe = async (req, res, next) => {
   }
 };
 
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, email, currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    const currentUser = await User.findByEmail(req.user.email);
+    if (!currentUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Utente non trovato",
+      });
+    }
+
+    if (email && email !== currentUser.email) {
+      const emailExists = await User.findByEmail(email);
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Un utente con questa email esiste già",
+        });
+      }
+    }
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Password attuale richiesta per cambiarla",
+        });
+      }
+
+      const isPasswordCorrect = await User.comparePassword(
+        currentPassword,
+        currentUser.password
+      );
+
+      if (!isPasswordCorrect) {
+        return res.status(400).json({
+          success: false,
+          message: "Password attuale non corretta",
+        });
+      }
+    }
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (newPassword) updateData.password = newPassword;
+
+    const updatedUser = await User.update(userId, updateData);
+
+    res.status(200).json({
+      success: true,
+      message: "Profilo aggiornato con successo",
+      data: {
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          created_at: updatedUser.created_at,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
@@ -148,5 +219,6 @@ module.exports = {
   register,
   login,
   getMe,
+  updateProfile,
   logout,
 };

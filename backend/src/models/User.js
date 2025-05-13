@@ -63,6 +63,10 @@ class User {
     const fields = [];
     const values = [];
 
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
     Object.keys(updateData).forEach((key) => {
       if (updateData[key] !== undefined) {
         fields.push(`${key} = ?`);
