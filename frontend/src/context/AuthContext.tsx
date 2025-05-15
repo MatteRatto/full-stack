@@ -3,6 +3,7 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import type {
@@ -19,13 +20,20 @@ type AuthAction =
   | { type: "AUTH_SUCCESS"; payload: { token: string; user: User } }
   | { type: "AUTH_FAILURE"; payload: string }
   | { type: "AUTH_LOGOUT" }
-  | { type: "SET_USER"; payload: User };
+  | { type: "SET_USER"; payload: User }
+  | { type: "SET_TOKEN_EXPIRATION"; payload: number | null }
+  | {
+      type: "SET_SERVER_STATUS";
+      payload: { minutesLeft: number; isNearExpiration: boolean } | null;
+    };
 
 interface AuthState {
   token: string | null;
   user: User | null;
   isLoading: boolean;
   error: string | null;
+  tokenExpirationMinutes: number | null;
+  serverTokenStatus: { minutesLeft: number; isNearExpiration: boolean } | null;
 }
 
 const initialState: AuthState = {
@@ -33,6 +41,8 @@ const initialState: AuthState = {
   user: null,
   isLoading: false,
   error: null,
+  tokenExpirationMinutes: null,
+  serverTokenStatus: null,
 };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -66,11 +76,23 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         user: null,
         error: null,
         isLoading: false,
+        tokenExpirationMinutes: null,
+        serverTokenStatus: null,
       };
     case "SET_USER":
       return {
         ...state,
         user: action.payload,
+      };
+    case "SET_TOKEN_EXPIRATION":
+      return {
+        ...state,
+        tokenExpirationMinutes: action.payload,
+      };
+    case "SET_SERVER_STATUS":
+      return {
+        ...state,
+        serverTokenStatus: action.payload,
       };
     default:
       return state;
@@ -86,17 +108,78 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  const updateTokenExpiration = useCallback(() => {
+    const token = authService.getToken();
+    if (token) {
+      const expirationMinutes = authService.getTokenExpirationTime();
+      dispatch({ type: "SET_TOKEN_EXPIRATION", payload: expirationMinutes });
+
+      if (expirationMinutes !== null && expirationMinutes <= 0) {
+        logout();
+      }
+    }
+  }, []);
+
+  const updateServerStatus = useCallback(async () => {
+    if (!authService.getToken()) return;
+
+    try {
+      const serverStatus = await authService.getTokenStatus();
+      dispatch({
+        type: "SET_SERVER_STATUS",
+        payload: {
+          minutesLeft: serverStatus.minutesUntilExpiration,
+          isNearExpiration: serverStatus.isNearExpiration,
+        },
+      });
+
+      if (serverStatus.isExpired) {
+        logout();
+      }
+    } catch (error) {
+      console.error("Failed to fetch server token status:", error);
+      if ((error as any).status === 401) {
+        logout();
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!authService.getToken()) return;
+
+    updateTokenExpiration();
+    const localInterval = setInterval(updateTokenExpiration, 60000);
+
+    updateServerStatus();
+    const serverInterval = setInterval(updateServerStatus, 120000);
+
+    return () => {
+      clearInterval(localInterval);
+      clearInterval(serverInterval);
+    };
+  }, [updateTokenExpiration, updateServerStatus]);
+
   useEffect(() => {
     const token = authService.getToken();
     const user = authService.getStoredUser();
 
     if (token && user) {
+      const expirationMinutes = authService.getTokenExpirationTime();
+
+      if (expirationMinutes !== null && expirationMinutes <= 0) {
+        logout();
+        return;
+      }
+
       dispatch({
         type: "AUTH_SUCCESS",
         payload: { token, user },
       });
+      dispatch({ type: "SET_TOKEN_EXPIRATION", payload: expirationMinutes });
+
+      updateServerStatus();
     }
-  }, []);
+  }, [updateServerStatus]);
 
   const login = async (credentials: LoginRequest): Promise<void> => {
     try {
@@ -112,6 +195,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             user: response.data.user,
           },
         });
+
+        updateTokenExpiration();
+        updateServerStatus();
 
         toast.success(response.message || "Login effettuato con successo!");
       } else {
@@ -140,6 +226,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             user: response.data.user,
           },
         });
+
+        updateTokenExpiration();
+        updateServerStatus();
 
         toast.success(
           response.message || "Registrazione completata con successo!"
@@ -174,15 +263,65 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const refreshToken = async (): Promise<boolean> => {
+    try {
+      const response = await authService.refreshToken();
+
+      if (response.success && response.data) {
+        dispatch({
+          type: "AUTH_SUCCESS",
+          payload: {
+            token: response.data.token,
+            user: response.data.user,
+          },
+        });
+
+        setTimeout(() => {
+          const newExpirationMinutes = authService.getTokenExpirationTime();
+
+          dispatch({
+            type: "SET_TOKEN_EXPIRATION",
+            payload: newExpirationMinutes,
+          });
+
+          authService
+            .getTokenStatus()
+            .then((serverStatus) => {
+              dispatch({
+                type: "SET_SERVER_STATUS",
+                payload: {
+                  minutesLeft: serverStatus.minutesUntilExpiration,
+                  isNearExpiration: serverStatus.isNearExpiration,
+                },
+              });
+            })
+            .catch((error) => {
+              console.error("AuthContext: Failed to get server status:", error);
+            });
+        }, 50);
+
+        return true;
+      }
+
+      return false;
+    } catch (error: any) {
+      console.error("AuthContext: Token refresh failed:", error);
+      return false;
+    }
+  };
+
   const value: AuthContextType = {
     token: state.token,
     user: state.user,
     isLoading: state.isLoading,
     isAuthenticated: !!state.token && !!state.user,
+    tokenExpirationMinutes: state.tokenExpirationMinutes,
+    serverTokenStatus: state.serverTokenStatus,
     login,
     register,
     logout,
     setUser,
+    refreshToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

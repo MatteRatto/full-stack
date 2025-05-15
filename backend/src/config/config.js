@@ -1,7 +1,9 @@
 module.exports = {
   jwt: {
-    secret: process.env.JWT_SECRET || "your-default-secret-key",
-    expiresIn: process.env.JWT_EXPIRE || "30d",
+    secret:
+      process.env.JWT_SECRET || "your-default-secret-key-change-in-production",
+    expiresIn: process.env.JWT_EXPIRE || "30m",
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRE || "7d",
   },
 
   password: {
@@ -22,5 +24,11 @@ module.exports = {
     windowMs: 15 * 60 * 1000,
     max: 100,
     message: "Too many requests from this IP, please try again later.",
+  },
+
+  tokenWarnings: {
+    criticalThreshold: 5,
+    warningThreshold: 15,
+    refreshThreshold: 30,
   },
 };

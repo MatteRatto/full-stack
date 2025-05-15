@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -14,6 +13,7 @@ import NotFound from "@/pages/NotFound";
 
 import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/common/Footer";
+import SessionManager from "./components/common/sessionManager";
 
 function App() {
   return (
@@ -33,6 +33,8 @@ function App() {
           </main>
 
           <Footer />
+
+          <SessionManager />
 
           <ToastContainer
             position="top-right"

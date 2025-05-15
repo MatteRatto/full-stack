@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { ROUTES } from "@/utils/constants";
+import TokenStatus from "./TokenStatus";
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -23,6 +24,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
+                <TokenStatus />
                 <span className="text-gray-700 font-medium">
                   Ciao, {user?.name}
                 </span>

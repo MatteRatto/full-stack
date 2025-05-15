@@ -4,9 +4,9 @@ import type {
   RegisterRequest,
   AuthResponse,
   LogoutResponse,
+  TokenStatus,
 } from "@/types/auth.types";
 import type { User } from "@/types/user.types";
-import type { ApiResponse } from "@/types/api.types";
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
@@ -68,13 +68,64 @@ class AuthService {
     }
   }
 
-  async getMe(): Promise<ApiResponse<{ user: User }>> {
-    return await apiService.get<{ user: User }>("/auth/me");
+  async getMe(): Promise<{ success: boolean; data: { user: User } }> {
+    const response = await apiService.get<{ user: User }>("/auth/me");
+
+    if (response.success && response.data) {
+      return {
+        success: response.success,
+        data: response.data,
+      };
+    }
+
+    throw new Error(response.error || "Errore nel recupero dei dati utente");
+  }
+
+  async refreshToken(): Promise<AuthResponse> {
+    try {
+      const response = await apiService.post<{
+        token: string;
+        user: User;
+      }>("/auth/refresh");
+
+      if (response.success && response.data) {
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+
+        const savedToken = localStorage.getItem("token");
+        const newExpirationTime = this.getTokenExpirationTime();
+
+        return {
+          success: response.success,
+          message: response.message || "Token refreshed successfully",
+          data: response.data,
+        };
+      }
+
+      throw new Error(response.error || "Token refresh failed");
+    } catch (error) {
+      console.error("AuthService: Token refresh failed:", error);
+      this.clearAuthData();
+      throw error;
+    }
+  }
+
+  async getTokenStatus(): Promise<TokenStatus> {
+    const response = await apiService.get<TokenStatus>("/auth/token-status");
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    throw new Error("Failed to get token status");
   }
 
   isAuthenticated(): boolean {
     const token = localStorage.getItem("token");
-    return !!token;
+    if (!token) return false;
+
+    const expirationTime = this.getTokenExpirationTime();
+    return expirationTime !== null && expirationTime > 0;
   }
 
   getToken(): string | null {
@@ -89,6 +140,42 @@ class AuthService {
   clearAuthData(): void {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+  }
+
+  getTokenExpirationTime(): number | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
+
+      const decoded = JSON.parse(jsonPayload);
+
+      if (!decoded.exp) return null;
+
+      const expirationTime = decoded.exp * 1000;
+      const currentTime = Date.now();
+      const timeUntilExpiration = expirationTime - currentTime;
+
+      return Math.floor(timeUntilExpiration / (1000 * 60));
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  }
+
+  isTokenNearExpiration(minutesThreshold: number = 15): boolean {
+    const minutesLeft = this.getTokenExpirationTime();
+    return minutesLeft !== null && minutesLeft <= minutesThreshold;
   }
 }
 

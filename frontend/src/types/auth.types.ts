@@ -25,15 +25,23 @@ export interface LogoutResponse {
   message?: string;
 }
 
+export interface ServerTokenStatus {
+  minutesLeft: number;
+  isNearExpiration: boolean;
+}
+
 export interface AuthContextType {
   token: string | null;
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  tokenExpirationMinutes: number | null;
+  serverTokenStatus: ServerTokenStatus | null;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
+  refreshToken: () => Promise<boolean>;
 }
 
 export interface AuthError {
@@ -43,4 +51,10 @@ export interface AuthError {
     field: string;
     message: string;
   }>;
+}
+
+export interface TokenStatus {
+  minutesUntilExpiration: number;
+  isExpired: boolean;
+  isNearExpiration: boolean;
 }

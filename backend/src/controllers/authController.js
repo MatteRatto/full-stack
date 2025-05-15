@@ -130,6 +130,85 @@ const getMe = async (req, res, next) => {
   }
 };
 
+// @desc    Refresh token
+// @route   POST /api/auth/refresh
+// @access  Private
+const refreshToken = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Utente non trovato",
+      });
+    }
+
+    const newToken = generateToken(user.id);
+    console.log("Refreshed token for user:", user.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Token aggiornato con successo",
+      data: {
+        token: newToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          created_at: user.created_at,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get token status
+// @route   GET /api/auth/token-status
+// @access  Private
+const getTokenStatus = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Token non fornito",
+      });
+    }
+
+    const decoded = jwt.decode(token);
+    if (!decoded || !decoded.exp) {
+      return res.status(400).json({
+        success: false,
+        message: "Token non valido",
+      });
+    }
+
+    const expirationTime = decoded.exp * 1000;
+    const currentTime = Date.now();
+    const timeUntilExpiration = expirationTime - currentTime;
+    const minutesUntilExpiration = Math.floor(
+      timeUntilExpiration / (1000 * 60)
+    );
+
+    const isExpired = minutesUntilExpiration <= 0;
+    const isNearExpiration = minutesUntilExpiration <= 15;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        minutesUntilExpiration: Math.max(0, minutesUntilExpiration),
+        isExpired,
+        isNearExpiration,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
@@ -219,6 +298,8 @@ module.exports = {
   register,
   login,
   getMe,
+  refreshToken,
+  getTokenStatus,
   updateProfile,
   logout,
 };

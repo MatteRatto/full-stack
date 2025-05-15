@@ -28,6 +28,7 @@ class ApiService {
 
     this.api.interceptors.response.use(
       (response: AxiosResponse<ApiResponse>) => {
+        this.handleTokenRefresh(response.headers);
         return response;
       },
       (error) => {
@@ -41,14 +42,40 @@ class ApiService {
         };
 
         if (apiError.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          window.location.href = "/login";
+          const isTokenExpired =
+            error.response?.data?.error === "TokenExpiredError" ||
+            error.response?.data?.message?.includes("scaduto") ||
+            error.response?.data?.message?.includes("expired");
+
+          if (isTokenExpired) {
+            console.log("Token expired, redirecting to login...");
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+
+            if (!window.location.pathname.includes("/login")) {
+              window.location.href = "/login";
+            }
+          }
         }
 
         return Promise.reject(apiError);
       }
     );
+  }
+
+  private handleTokenRefresh(headers: any): void {
+    const newToken = headers["x-new-token"];
+    const wasRefreshed = headers["x-token-refreshed"] === "true";
+    const tokenWarning = headers["x-token-warning"];
+
+    if (newToken && wasRefreshed) {
+      localStorage.setItem("token", newToken);
+      console.log("Token automatically refreshed by server");
+    }
+
+    if (tokenWarning) {
+      console.warn("Token warning:", tokenWarning);
+    }
   }
 
   private async request<T>(
