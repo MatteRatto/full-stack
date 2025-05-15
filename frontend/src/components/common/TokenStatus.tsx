@@ -37,10 +37,10 @@ const TokenStatus: React.FC = () => {
   const getStatusConfig = () => {
     if (minutesToExpire <= 0) {
       return {
-        color: "text-red-800 bg-red-50 border-red-400",
+        color: "text-red-800 bg-red-50 border-red-300",
         icon: "⚠️",
-        title: "Sessione scaduta",
-        message: "La tua sessione è scaduta. Verrai reindirizzato al login.",
+        status: "Sessione scaduta",
+        message: `${minutesToExpire}min`,
         urgency: "expired",
         showRefresh: false,
       };
@@ -48,12 +48,10 @@ const TokenStatus: React.FC = () => {
 
     if (minutesToExpire <= 2) {
       return {
-        color: "text-red-800 bg-red-50 border-red-400",
+        color: "text-red-800 bg-red-50 border-red-300",
         icon: "🚨",
-        title: "Sessione critica",
-        message: `${minutesToExpire} minut${
-          minutesToExpire > 1 ? "i" : "o"
-        } rimanen${minutesToExpire > 1 ? "ti" : "te"}`,
+        status: "Sessione critica",
+        message: `${minutesToExpire}min`,
         urgency: "critical",
         showRefresh: true,
       };
@@ -61,10 +59,10 @@ const TokenStatus: React.FC = () => {
 
     if (minutesToExpire <= 5) {
       return {
-        color: "text-red-700 bg-red-50 border-red-300",
+        color: "text-orange-700 bg-orange-50 border-orange-300",
         icon: "⏰",
-        title: "Scadenza imminente",
-        message: `${minutesToExpire} minuti rimanenti`,
+        status: "Scadenza imminente",
+        message: `${minutesToExpire}min`,
         urgency: "warning",
         showRefresh: true,
       };
@@ -74,8 +72,8 @@ const TokenStatus: React.FC = () => {
       return {
         color: "text-yellow-700 bg-yellow-50 border-yellow-300",
         icon: "⚡",
-        title: "Sessione in scadenza",
-        message: `${minutesToExpire} minuti rimanenti`,
+        status: "Sessione in scadenza",
+        message: `${minutesToExpire}min`,
         urgency: "caution",
         showRefresh: true,
       };
@@ -84,8 +82,8 @@ const TokenStatus: React.FC = () => {
     return {
       color: "text-green-700 bg-green-50 border-green-300",
       icon: "✅",
-      title: "Sessione attiva",
-      message: `${minutesToExpire} minuti rimanenti`,
+      status: "Sessione attiva",
+      message: `${minutesToExpire}min`,
       urgency: "active",
       showRefresh: false,
     };
@@ -96,68 +94,43 @@ const TokenStatus: React.FC = () => {
   return (
     <div
       className={`
-        px-3 py-2 rounded-lg text-sm border-2 flex items-center space-x-2
+        px-2.5 py-1.5 rounded-lg text-xs border flex items-center gap-2
         ${config.color}
         ${config.urgency === "critical" ? "animate-pulse" : ""}
         transition-all duration-300
       `}
     >
-      <span className="text-base">{config.icon}</span>
+      <span className="text-xs">{config.icon}</span>
 
-      <div className="flex flex-col flex-1">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-xs">{config.title}</span>
-
-          <div className="flex items-center space-x-1">
-            {serverTokenStatus && (
-              <span
-                className="text-xs opacity-75"
-                title="Stato sincronizzato con il server"
-              ></span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className="text-xs opacity-90">{config.message}</span>
-
-          {config.showRefresh && minutesToExpire > 1 && (
-            <button
-              onClick={handleManualRefresh}
-              disabled={isRefreshing}
-              className="text-xs px-2 py-1 bg-white bg-opacity-80 rounded border hover:bg-opacity-100 transition-all disabled:opacity-50"
-              title="Estendi sessione di 30 minuti"
-            >
-              {isRefreshing ? "⟳" : "🔄 +30min"}
-            </button>
-          )}
-        </div>
-
-        {lastRefresh && (
-          <span className="text-xs opacity-60">
-            Ultimo aggiornamento: {lastRefresh.toLocaleTimeString()}
-          </span>
-        )}
+      <div className="flex items-center gap-1.5">
+        <span className="font-medium hidden sm:inline">{config.status}</span>
+        <span className="font-medium sm:hidden">Sessione</span>
+        <span className="opacity-75">{config.message}</span>
       </div>
 
-      {serverTokenStatus && (
-        <div className="flex flex-col items-center">
-          {serverTokenStatus.isNearExpiration && (
-            <span
-              className="text-xs text-orange-600"
-              title="Vicino alla scadenza"
-            >
-              ⚠
-            </span>
-          )}
+      {config.showRefresh && minutesToExpire > 1 && (
+        <button
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          className="text-xs px-1.5 py-0.5 bg-white bg-opacity-60 rounded hover:bg-opacity-100 transition-all disabled:opacity-50 ml-auto"
+          title="Estendi sessione"
+        >
+          {isRefreshing ? "⟳" : "🔄"}
+        </button>
+      )}
 
-          <span
-            className="text-xs opacity-50"
-            title={`Server: ${serverTokenStatus.minutesLeft}min / Local: ${tokenExpirationMinutes}min`}
-          >
-            S:{serverTokenStatus.minutesLeft}
-          </span>
+      {lastRefresh && (
+        <div className="text-xs opacity-60 ml-auto sm:ml-1">
+          <span className="hidden sm:inline">Ultimo aggiornamento: </span>
+          <span>{lastRefresh.toLocaleTimeString()}</span>
         </div>
+      )}
+
+      {serverTokenStatus && (
+        <span
+          className="text-xs opacity-50 hidden lg:inline"
+          title={`Server: ${serverTokenStatus.minutesLeft}min / Local: ${tokenExpirationMinutes}min`}
+        ></span>
       )}
     </div>
   );

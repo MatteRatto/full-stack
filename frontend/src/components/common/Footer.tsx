@@ -5,7 +5,6 @@ const Footer: React.FC = () => {
   const [showContactsMenu, setShowContactsMenu] = useState(false);
   const contactsMenuRef = useRef<HTMLDivElement>(null);
 
-  // Chiudi il menu se si clicca fuori
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -45,56 +44,93 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <p className="text-gray-500 text-sm">
             © {currentYear} MR app. Tutti i diritti riservati.
           </p>
-          <div className="mt-2 flex justify-center space-x-6">
-            <a
-              href="#"
-              className="text-gray-400 hover:text-gray-500 transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="#"
-              className="text-gray-400 hover:text-gray-500 transition-colors"
-            >
-              Termini di Servizio
-            </a>
-            <div className="relative" ref={contactsMenuRef}>
-              <button
-                onClick={() => setShowContactsMenu(!showContactsMenu)}
-                className="text-gray-400 hover:text-gray-500 transition-colors focus:outline-none"
-              >
-                Contatti
-              </button>
 
-              {showContactsMenu && (
-                <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-10">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
-                    Contattami su
+          <div className="hidden sm:block">
+            <div className="mt-2 flex justify-center space-x-6">
+              <a
+                href="#"
+                className="text-gray-400 hover:text-gray-500 transition-colors"
+              >
+                Privacy Policy
+              </a>
+              <a
+                href="#"
+                className="text-gray-400 hover:text-gray-500 transition-colors"
+              >
+                Termini di Servizio
+              </a>
+              <div className="relative" ref={contactsMenuRef}>
+                <button
+                  onClick={() => setShowContactsMenu(!showContactsMenu)}
+                  className="text-gray-400 hover:text-gray-500 transition-colors focus:outline-none"
+                >
+                  Contatti
+                </button>
+
+                {showContactsMenu && (
+                  <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-10">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                      Contattami su
+                    </div>
+                    {contactOptions.map((contact, index) => (
+                      <a
+                        key={index}
+                        href={contact.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors"
+                        onClick={() => setShowContactsMenu(false)}
+                      >
+                        <span className="mr-3 text-gray-400 group-hover:text-primary-500">
+                          {contact.icon}
+                        </span>
+                        {contact.name}
+                      </a>
+                    ))}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-white"></div>
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-200 mt-px"></div>
                   </div>
-                  {contactOptions.map((contact, index) => (
-                    <a
-                      key={index}
-                      href={contact.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors"
-                      onClick={() => setShowContactsMenu(false)}
-                    >
-                      <span className="mr-3 text-gray-400 group-hover:text-primary-500">
-                        {contact.icon}
-                      </span>
-                      {contact.name}
-                    </a>
-                  ))}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-white"></div>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-200 mt-px"></div>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="sm:hidden">
+            <div className="mt-3 space-y-2">
+              <div className="flex justify-center space-x-4">
+                <a
+                  href="#"
+                  className="text-gray-400 hover:text-gray-500 transition-colors text-sm"
+                >
+                  Privacy
+                </a>
+                <a
+                  href="#"
+                  className="text-gray-400 hover:text-gray-500 transition-colors text-sm"
+                >
+                  Termini
+                </a>
+              </div>
+
+              <div className="flex justify-center space-x-4">
+                {contactOptions.map((contact, index) => (
+                  <a
+                    key={index}
+                    href={contact.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-primary-600 transition-colors"
+                    title={contact.name}
+                  >
+                    {contact.icon}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
