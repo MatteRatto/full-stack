@@ -1,4 +1,4 @@
-# Myapp - Applicazione di Autenticazione Sicura
+# MR app - Applicazione di Autenticazione Sicura
 
 Un'applicazione full-stack per l'autenticazione sicura degli utenti con gestione avanzata delle sessioni JWT.
 
