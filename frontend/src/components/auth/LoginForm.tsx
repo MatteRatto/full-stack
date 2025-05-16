@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { loginSchema, type LoginFormData } from "@/utils/validation";
 import { ROUTES } from "@/utils/constants";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import PasswordInput from "../ui/passwordInput";
 
 const LoginForm: React.FC = () => {
   const { login, isLoading } = useAuth();
@@ -72,29 +73,15 @@ const LoginForm: React.FC = () => {
                 )}
               </div>
 
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Password
-                </label>
-                <input
-                  {...register("password")}
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  className={`mt-1 block w-full px-3 py-2 border ${
-                    errors.password ? "border-red-300" : "border-gray-300"
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                  placeholder="Password"
-                />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+              <PasswordInput
+                {...register("password")}
+                id="password"
+                label="Password"
+                placeholder="Password"
+                autoComplete="current-password"
+                error={errors.password?.message}
+                required
+              />
             </div>
 
             <div>
