@@ -99,7 +99,6 @@ DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=Myapp_db
 JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRE=30m
 FRONTEND_URL=http://localhost:3000
 ```
 
