@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import SessionExpirationModal from "./sessionExpiratedModal";
-import TokenStatus from "./TokenStatus";
 import { toast } from "react-toastify";
 
 const SessionManager: React.FC = () => {

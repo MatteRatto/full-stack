@@ -1,98 +1,98 @@
-# MR app - Applicazione di Autenticazione Sicura
+# MR app - Secure Authentication Application
 
-Un'applicazione full-stack per l'autenticazione sicura degli utenti con gestione avanzata delle sessioni JWT.
+A full-stack application for secure user authentication with advanced JWT session management.
 
-## 🚀 Funzionalità
+## 🚀 Features
 
-### Autenticazione
+### Authentication
 
-- **Registrazione utenti** con validazione completa dei dati
-- **Login sicuro** con hashing delle password (bcrypt)
-- **Logout** con pulizia delle sessioni
-- **Autenticazione JWT** con token auto-rinnovabili
+- **User registration** with complete data validation
+- **Secure login** with password hashing (bcrypt)
+- **Logout** with session cleanup
+- **JWT authentication** with auto-renewable tokens
 
-### Gestione Sessione Avanzata
+### Advanced Session Management
 
-- **Monitoraggio in tempo reale** dello stato del token
-- **Notifiche di scadenza** progressive (15, 10, 5, 2, 1 minuti)
-- **Refresh automatico** del token quando vicino alla scadenza
-- **Indicatore visivo** dello stato della sessione
-- **Modal di conferma** per estendere la sessione
-- **Sincronizzazione server-client** dello stato del token
+- **Real-time monitoring** of token status
+- **Progressive expiration notifications** (15, 10, 5, 2, 1 minutes)
+- **Automatic token refresh** when nearing expiration
+- **Visual indicator** of session status
+- **Confirmation modal** to extend session
+- **Server-client synchronization** of token status
 
-### Profilo Utente
+### User Profile
 
-- **Visualizzazione profilo** con informazioni dettagliate
-- **Modifica profilo** (nome, email)
-- **Cambio password** opzionale con validazione
+- **Profile view** with detailed information
+- **Profile editing** (name, email)
+- **Optional password change** with validation
 
 ### UI/UX
 
-- **Design responsive** con Tailwind CSS
-- **Interfaccia italiana** completamente localizzata
-- **Notifiche toast** per feedback utente
-- **Animazioni fluide** e transizioni
-- **Layout mobile-friendly**
+- **Responsive design** with Tailwind CSS
+- **Italian interface** fully localized
+- **Toast notifications** for user feedback
+- **Smooth animations** and transitions
+- **Mobile-friendly layout**
 
-## 🛠️ Tecnologie Utilizzate
+## 🛠️ Technologies Used
 
 ### Frontend
 
-- **React 18** con TypeScript
-- **React Router** per la navigazione
-- **React Hook Form** + Zod per la validazione
-- **Tailwind CSS** per lo styling
-- **React Toastify** per le notifiche
-- **Vite** come build tool
+- **React 18** with TypeScript
+- **React Router** for navigation
+- **React Hook Form** + Zod for validation
+- **Tailwind CSS** for styling
+- **React Toastify** for notifications
+- **Vite** as build tool
 
 ### Backend
 
-- **Node.js** con Express
-- **MySQL** come database
-- **JWT** per l'autenticazione
-- **bcrypt** per l'hashing delle password
-- **express-rate-limit** per la protezione
-- **helmet** per la sicurezza
+- **Node.js** with Express
+- **MySQL** as database
+- **JWT** for authentication
+- **bcrypt** for password hashing
+- **express-rate-limit** for protection
+- **helmet** for security
 
 ## 🚦 Getting Started
 
-### Prerequisiti
+### Prerequisites
 
-- Node.js (v16 o superiore)
-- MySQL (v8 o superiore)
+- Node.js (v16 or higher)
+- MySQL (v8 or higher)
 - npm
 
-### Installazione
+### Installation
 
-1. **Clona il repository**
+1. **Clone the repository**
 
 ```bash
 git clone <repository-url>
 cd Myapp
 ```
 
-2. **Setup Backend**
+2. **Backend Setup**
 
 ```bash
 cd backend
 npm install
 ```
 
-3. **Configura il database**
+3. **Configure the database**
 
 ```bash
-# Crea un database MySQL
+# Create a MySQL database
 mysql -u root -p
 CREATE DATABASE Myapp_db;
 ```
 
-4. **Configura le variabili d'ambiente**
+4. **Configure environment variables**
 
 ```bash
-# Crea file .env nella cartella backend
+# Create .env file in backend folder
 cp .env.example .env
 
-# Modifica le variabili in .env:
+# Edit variables in .env:
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
@@ -102,72 +102,72 @@ JWT_SECRET=your_jwt_secret_key
 FRONTEND_URL=http://localhost:3000
 ```
 
-5. **Avvia il backend**
+5. **Start the backend**
 
 ```bash
 npm run dev
 ```
 
-6. **Setup Frontend**
+6. **Frontend Setup**
 
 ```bash
 cd ../frontend
 npm install
 ```
 
-7. **Configura variabili frontend**
+7. **Configure frontend variables**
 
 ```bash
-# Crea file .env.local
+# Create .env.local file
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-8. **Avvia il frontend**
+8. **Start the frontend**
 
 ```bash
 npm run dev
 ```
 
-L'applicazione sarà disponibile su `http://localhost:3000`
+The application will be available at `http://localhost:3000`
 
-## 🔐 Sicurezza
+## 🔐 Security
 
-### Misure Implementate
+### Implemented Measures
 
-- **Hashing delle password** con bcrypt (salt rounds: 10)
-- **Token JWT** con scadenza configurabile
-- **Rate limiting** (100 richieste per 15 minuti)
-- **Helmet** per headers di sicurezza
-- **CORS** configurato per dominio specifico
-- **Validazione input** lato server e client
+- **Password hashing** with bcrypt (salt rounds: 10)
+- **JWT tokens** with configurable expiration
+- **Rate limiting** (100 requests per 15 minutes)
+- **Helmet** for security headers
+- **CORS** configured for specific domain
+- **Input validation** on both server and client side
 
-### Gestione Token
+### Token Management
 
-- **Scadenza token**: 30 minuti (configurabile)
-- **Refresh automatico**: quando mancano 15 minuti
-- **Controllo scadenza**: ogni minuto lato client
-- **Sincronizzazione server**: ogni 2 minuti
+- **Token expiration**: 30 minutes (configurable)
+- **Automatic refresh**: when 15 minutes remain
+- **Expiration check**: every minute on client side
+- **Server synchronization**: every 2 minutes
 
-## 📊 Features Avanzate
+## 📊 Advanced Features
 
-### Monitoraggio Sessione
+### Session Monitoring
 
-- Indicatore visivo dello stato del token nella navbar
-- Notifiche progressive di scadenza
-- Modal per conferma estensione sessione
-- Logging dettagliato per debug
+- Visual indicator of token status in navbar
+- Progressive expiration notifications
+- Modal for session extension confirmation
+- Detailed logging for debugging
 
-### Validazione
+### Validation
 
-- **Lato client**: React Hook Form + Zod schemas
-- **Lato server**: express-validator
+- **Client-side**: React Hook Form + Zod schemas
+- **Server-side**: express-validator
 
 ### UI Components
 
-- Design system coerente
-- Componenti riutilizzabili
+- Consistent design system
+- Reusable components
 - Responsive design
-- Loading states e feedback visivo
+- Loading states and visual feedback
 
 ## 🚀 Deploy
 
@@ -182,26 +182,26 @@ npm start
 
 ```bash
 npm run build
-# Deploy della cartella dist/
+# Deploy the dist/ folder
 ```
 
 ## 📝 API Endpoints
 
 ### Auth
 
-- `POST /api/auth/register` - Registrazione utente
-- `POST /api/auth/login` - Login utente
-- `GET /api/auth/me` - Profilo utente corrente
-- `PUT /api/auth/profile` - Aggiorna profilo
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/me` - Current user profile
+- `PUT /api/auth/profile` - Update profile
 - `POST /api/auth/refresh` - Refresh token
-- `GET /api/auth/token-status` - Stato token
+- `GET /api/auth/token-status` - Token status
 - `POST /api/auth/logout` - Logout
 
-## 🎨 Customizzazione
+## 🎨 Customization
 
-### Colori (Tailwind)
+### Colors (Tailwind)
 
-Il progetto usa un colore primario personalizzabile in `tailwind.config.js`:
+The project uses a customizable primary color in `tailwind.config.js`:
 
 ```javascript
 colors: {
@@ -209,18 +209,18 @@ colors: {
 }
 ```
 
-### Configurazione JWT
+### JWT Configuration
 
-Modifica `backend/src/config/config.js` per personalizzare:
+Edit `backend/src/config/config.js` to customize:
 
-- Durata token
-- Soglie di scadenza
-- Configurazioni di sicurezza
+- Token duration
+- Expiration thresholds
+- Security configurations
 
-## 📄 Licenza
+## 📄 License
 
-MIT License - vedi file LICENSE per dettagli
+MIT License - see LICENSE file for details
 
-## 👨‍💻 Autore
+## 👨‍💻 Author
 
 Matteo Ratto
