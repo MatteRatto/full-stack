@@ -56,6 +56,10 @@ A full-stack application for secure user authentication with advanced JWT sessio
 
 ## 🚦 Getting Started
 
+## 🌐 Live Demo
+
+Try the application now: https://full-stack-mr.netlify.app/
+
 ### Prerequisites
 
 - Node.js (v16 or higher)
