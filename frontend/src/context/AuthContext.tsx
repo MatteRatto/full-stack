@@ -15,6 +15,17 @@ import type { User } from "@/types/user.types";
 import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
+const DEMO_MODE = true;
+
+const DEMO_USER: User = {
+  id: 1,
+  name: "Marco Bianchi",
+  email: "marco.bianchi@demo.com",
+  created_at: "2024-01-15T10:30:00Z",
+};
+
+const DEMO_TOKEN = "demo-jwt-token-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+
 type AuthAction =
   | { type: "AUTH_START" }
   | { type: "AUTH_SUCCESS"; payload: { token: string; user: User } }
@@ -109,6 +120,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   const updateTokenExpiration = useCallback(() => {
+    if (DEMO_MODE) return;
+
     const token = authService.getToken();
     if (token) {
       const expirationMinutes = authService.getTokenExpirationTime();
@@ -121,6 +134,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const updateServerStatus = useCallback(async () => {
+    if (DEMO_MODE) return;
+
     if (!authService.getToken()) return;
 
     try {
@@ -145,6 +160,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   useEffect(() => {
+    if (DEMO_MODE) return;
+
     if (!authService.getToken()) return;
 
     updateTokenExpiration();
@@ -160,6 +177,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [updateTokenExpiration, updateServerStatus]);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      return;
+    }
+
     const token = authService.getToken();
     const user = authService.getStoredUser();
 
@@ -182,6 +203,56 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [updateServerStatus]);
 
   const login = async (credentials: LoginRequest): Promise<void> => {
+    if (DEMO_MODE) {
+      dispatch({ type: "AUTH_START" });
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const validDemoCredentials = [
+        { email: "demo@demo.com", password: "demo123" },
+        { email: "marco.bianchi@demo.com", password: "password123" },
+        { email: "test@test.com", password: "test123" },
+      ];
+
+      const isValidDemo = validDemoCredentials.some(
+        (cred) =>
+          cred.email === credentials.email &&
+          cred.password === credentials.password
+      );
+
+      if (!isValidDemo) {
+        dispatch({
+          type: "AUTH_FAILURE",
+          payload:
+            "Credenziali demo non valide. Prova: demo@demo.com / demo123",
+        });
+        toast.error(
+          "Credenziali demo non valide. Prova: demo@demo.com / demo123"
+        );
+        throw new Error("Credenziali demo non valide");
+      }
+
+      dispatch({
+        type: "AUTH_SUCCESS",
+        payload: {
+          token: DEMO_TOKEN,
+          user: DEMO_USER,
+        },
+      });
+
+      dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
+      dispatch({
+        type: "SET_SERVER_STATUS",
+        payload: {
+          minutesLeft: 30,
+          isNearExpiration: false,
+        },
+      });
+
+      toast.success("Login demo effettuato con successo!");
+      return;
+    }
+
     try {
       dispatch({ type: "AUTH_START" });
 
@@ -213,6 +284,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const register = async (userData: RegisterRequest): Promise<void> => {
+    if (DEMO_MODE) {
+      dispatch({ type: "AUTH_START" });
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const newDemoUser: User = {
+        id: 2,
+        name: userData.name,
+        email: userData.email,
+        created_at: new Date().toISOString(),
+      };
+
+      dispatch({
+        type: "AUTH_SUCCESS",
+        payload: {
+          token: DEMO_TOKEN,
+          user: newDemoUser,
+        },
+      });
+
+      dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
+      dispatch({
+        type: "SET_SERVER_STATUS",
+        payload: {
+          minutesLeft: 30,
+          isNearExpiration: false,
+        },
+      });
+
+      toast.success("Registrazione demo completata con successo!");
+      return;
+    }
+
     try {
       dispatch({ type: "AUTH_START" });
 
@@ -246,6 +350,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async (): Promise<void> => {
+    if (DEMO_MODE) {
+      dispatch({ type: "AUTH_LOGOUT" });
+      toast.success("Logout demo effettuato con successo!");
+      return;
+    }
+
     try {
       await authService.logout();
       dispatch({ type: "AUTH_LOGOUT" });
@@ -257,6 +367,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const setUser = (user: User | null): void => {
+    if (DEMO_MODE) {
+      if (user) {
+        dispatch({ type: "SET_USER", payload: user });
+      }
+      return;
+    }
+
     if (user) {
       dispatch({ type: "SET_USER", payload: user });
       localStorage.setItem("user", JSON.stringify(user));
@@ -264,6 +381,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const refreshToken = async (): Promise<boolean> => {
+    if (DEMO_MODE) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
+      dispatch({
+        type: "SET_SERVER_STATUS",
+        payload: {
+          minutesLeft: 30,
+          isNearExpiration: false,
+        },
+      });
+
+      toast.success("Token demo aggiornato con successo!");
+      return true;
+    }
+
+    // Codice originale per backend vero
     try {
       const response = await authService.refreshToken();
 

@@ -8,12 +8,50 @@ import { ROUTES } from "@/utils/constants";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import PasswordInput from "../ui/passwordInput";
 
+const DemoCredentialsBanner: React.FC = () => {
+  return (
+    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex items-start space-x-3">
+        <div className="flex-shrink-0">
+          <span className="text-2xl">🎭</span>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-blue-800 mb-2">
+            Modalità Demo - Credenziali di Test
+          </h3>
+          <div className="bg-blue-100 rounded p-3 mb-2">
+            <div className="text-xs text-blue-700 space-y-1">
+              <p>
+                <strong>Email:</strong>{" "}
+                <code className="bg-blue-200 px-1 rounded">demo@demo.com</code>
+              </p>
+              <p>
+                <strong>Password:</strong>{" "}
+                <code className="bg-blue-200 px-1 rounded">demo123</code>
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-blue-600">
+            💡 Usa queste credenziali per provare l'applicazione senza backend
+          </p>
+          <div className="mt-2 text-xs text-blue-500">
+            <strong>Altre credenziali valide:</strong>
+            <br />• marco.bianchi@demo.com / password123
+            <br />• test@test.com / test123
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const LoginForm: React.FC = () => {
   const { login, isLoading } = useAuth();
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -26,6 +64,11 @@ const LoginForm: React.FC = () => {
     } catch (error) {
       console.error("Login error:", error);
     }
+  };
+
+  const fillDemoCredentials = () => {
+    setValue("email", "demo@demo.com");
+    setValue("password", "demo123");
   };
 
   return (
@@ -46,6 +89,8 @@ const LoginForm: React.FC = () => {
               </Link>
             </p>
           </div>
+
+          <DemoCredentialsBanner />
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
@@ -84,7 +129,15 @@ const LoginForm: React.FC = () => {
               />
             </div>
 
-            <div>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={fillDemoCredentials}
+                className="w-full flex justify-center py-2 px-4 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                🚀 Compila Credenziali Demo
+              </button>
+
               <button
                 type="submit"
                 disabled={isLoading}
