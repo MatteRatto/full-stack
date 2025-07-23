@@ -15,7 +15,16 @@ import type { User } from "@/types/user.types";
 import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
-const DEMO_MODE = true;
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true' || false;
+
+const isBackendAvailable = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/health`);
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
 
 const DEMO_USER: User = {
   id: 1,
@@ -33,6 +42,7 @@ type AuthAction =
   | { type: "AUTH_LOGOUT" }
   | { type: "SET_USER"; payload: User }
   | { type: "SET_TOKEN_EXPIRATION"; payload: number | null }
+  | { type: "SET_DEMO_MODE"; payload: boolean }
   | {
       type: "SET_SERVER_STATUS";
       payload: { minutesLeft: number; isNearExpiration: boolean } | null;
@@ -45,6 +55,7 @@ interface AuthState {
   error: string | null;
   tokenExpirationMinutes: number | null;
   serverTokenStatus: { minutesLeft: number; isNearExpiration: boolean } | null;
+  isDemoMode: boolean;
 }
 
 const initialState: AuthState = {
@@ -54,6 +65,7 @@ const initialState: AuthState = {
   error: null,
   tokenExpirationMinutes: null,
   serverTokenStatus: null,
+  isDemoMode: DEMO_MODE,
 };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
@@ -100,6 +112,11 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         tokenExpirationMinutes: action.payload,
       };
+    case "SET_DEMO_MODE":
+      return {
+        ...state,
+        isDemoMode: action.payload,
+      };
     case "SET_SERVER_STATUS":
       return {
         ...state,
@@ -119,8 +136,32 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  useEffect(() => {
+    const checkBackend = async () => {
+      if (DEMO_MODE) {
+        console.log("🎭 Demo mode attivata tramite variabile d'ambiente");
+        return;
+      }
+      
+      const backendAvailable = await isBackendAvailable();
+      
+      if (!backendAvailable) {
+        console.log("⚠️ Backend non disponibile, attivando demo mode automaticamente");
+        dispatch({ type: "SET_DEMO_MODE", payload: true });
+        toast.info("Modalità demo attivata - Backend non disponibile", {
+          autoClose: 3000,
+        });
+      } else {
+        console.log("✅ Backend disponibile, modalità normale");
+        dispatch({ type: "SET_DEMO_MODE", payload: false });
+      }
+    };
+
+    checkBackend();
+  }, []);
+
   const updateTokenExpiration = useCallback(() => {
-    if (DEMO_MODE) return;
+    if (state.isDemoMode) return;
 
     const token = authService.getToken();
     if (token) {
@@ -131,10 +172,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout();
       }
     }
-  }, []);
+  }, [state.isDemoMode]);
 
   const updateServerStatus = useCallback(async () => {
-    if (DEMO_MODE) return;
+    if (state.isDemoMode) return;
 
     if (!authService.getToken()) return;
 
@@ -157,10 +198,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout();
       }
     }
-  }, []);
+  }, [state.isDemoMode]);
 
   useEffect(() => {
-    if (DEMO_MODE) return;
+    if (state.isDemoMode) return;
 
     if (!authService.getToken()) return;
 
@@ -174,10 +215,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       clearInterval(localInterval);
       clearInterval(serverInterval);
     };
-  }, [updateTokenExpiration, updateServerStatus]);
+  }, [updateTokenExpiration, updateServerStatus, state.isDemoMode]);
 
   useEffect(() => {
-    if (DEMO_MODE) {
+    if (state.isDemoMode) {
       return;
     }
 
@@ -200,10 +241,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       updateServerStatus();
     }
-  }, [updateServerStatus]);
+  }, [updateServerStatus, state.isDemoMode]);
 
   const login = async (credentials: LoginRequest): Promise<void> => {
-    if (DEMO_MODE) {
+    if (state.isDemoMode) {
       dispatch({ type: "AUTH_START" });
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -249,7 +290,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       });
 
-      toast.success("Login demo effettuato con successo!");
+      toast.success("🎭 Login demo effettuato con successo!");
       return;
     }
 
@@ -284,13 +325,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const register = async (userData: RegisterRequest): Promise<void> => {
-    if (DEMO_MODE) {
+    if (state.isDemoMode) {
       dispatch({ type: "AUTH_START" });
 
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const newDemoUser: User = {
-        id: 2,
+        id: Math.floor(Math.random() * 1000) + 2,
         name: userData.name,
         email: userData.email,
         created_at: new Date().toISOString(),
@@ -313,7 +354,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       });
 
-      toast.success("Registrazione demo completata con successo!");
+      toast.success("🎭 Registrazione demo completata con successo!");
       return;
     }
 
@@ -350,9 +391,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async (): Promise<void> => {
-    if (DEMO_MODE) {
+    if (state.isDemoMode) {
       dispatch({ type: "AUTH_LOGOUT" });
-      toast.success("Logout demo effettuato con successo!");
+      toast.success("🎭 Logout demo effettuato con successo!");
       return;
     }
 
@@ -367,7 +408,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const setUser = (user: User | null): void => {
-    if (DEMO_MODE) {
+    if (state.isDemoMode) {
       if (user) {
         dispatch({ type: "SET_USER", payload: user });
       }
@@ -381,7 +422,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const refreshToken = async (): Promise<boolean> => {
-    if (DEMO_MODE) {
+    if (state.isDemoMode) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
@@ -393,11 +434,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       });
 
-      toast.success("Token demo aggiornato con successo!");
+      toast.success("🎭 Token demo aggiornato con successo!");
       return true;
     }
 
-    // Codice originale per backend vero
     try {
       const response = await authService.refreshToken();
 

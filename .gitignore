@@ -11,3 +11,6 @@ frontend/dist/
 #db
 backend/src/database
 
+# env
+frontend/.env.local
+frontend/.env.production
