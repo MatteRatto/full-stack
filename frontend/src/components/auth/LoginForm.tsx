@@ -1,11 +1,11 @@
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { useAuth } from "@/context/AuthContext";
+import { ROUTES } from "@/utils/constants";
+import { loginSchema, type LoginFormData } from "@/utils/validation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { loginSchema, type LoginFormData } from "@/utils/validation";
-import { ROUTES } from "@/utils/constants";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
 import PasswordInput from "../ui/passwordInput";
 
 const DemoCredentialsBanner: React.FC = () => {
@@ -46,7 +46,7 @@ const DemoCredentialsBanner: React.FC = () => {
 };
 
 const LoginForm: React.FC = () => {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isDemoMode } = useAuth();
 
   const {
     register,
@@ -90,7 +90,7 @@ const LoginForm: React.FC = () => {
             </p>
           </div>
 
-          <DemoCredentialsBanner />
+          {isDemoMode && <DemoCredentialsBanner />}
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
@@ -130,13 +130,15 @@ const LoginForm: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={fillDemoCredentials}
-                className="w-full flex justify-center py-2 px-4 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-              >
-                🚀 Compila Credenziali Demo
-              </button>
+              {isDemoMode && (
+                <button
+                  type="button"
+                  onClick={fillDemoCredentials}
+                  className="w-full flex justify-center py-2 px-4 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                >
+                  🚀 Compila Credenziali Demo
+                </button>
+              )}
 
               <button
                 type="submit"

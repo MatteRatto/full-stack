@@ -46,6 +46,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   tokenExpirationMinutes: number | null;
   serverTokenStatus: ServerTokenStatus | null;
+  isDemoMode: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
   logout: () => void;

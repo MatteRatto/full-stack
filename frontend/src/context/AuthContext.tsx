@@ -1,25 +1,29 @@
-import {
-  createContext,
-  useContext,
-  useReducer,
-  useEffect,
-  useCallback,
-  ReactNode,
-} from "react";
+import authService from "@/services/authService";
 import type {
   AuthContextType,
   LoginRequest,
   RegisterRequest,
 } from "@/types/auth.types";
 import type { UpdateUserData, User } from "@/types/user.types";
-import authService from "@/services/authService";
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useReducer,
+} from "react";
 import { toast } from "react-toastify";
 
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true' || false;
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true" || false;
 
 const isBackendAvailable = async (): Promise<boolean> => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/health`);
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+      }/health`
+    );
     return response.ok;
   } catch {
     return false;
@@ -142,11 +146,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log("🎭 Demo mode attivata tramite variabile d'ambiente");
         return;
       }
-      
+
       const backendAvailable = await isBackendAvailable();
-      
+
       if (!backendAvailable) {
-        console.log("⚠️ Backend non disponibile, attivando demo mode automaticamente");
+        console.log(
+          "⚠️ Backend non disponibile, attivando demo mode automaticamente"
+        );
         dispatch({ type: "SET_DEMO_MODE", payload: true });
         toast.info("Modalità demo attivata - Backend non disponibile", {
           autoClose: 3000,
@@ -484,26 +490,49 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-
   const updateProfile = async (userData: UpdateUserData): Promise<void> => {
-  if (state.isDemoMode) {
-    const updatedUser = { ...state.user!, ...userData };
-    dispatch({ type: "SET_USER", payload: updatedUser });
-    toast.success("🎭 Profilo demo aggiornato con successo!");
-    return;
-  }
+    if (state.isDemoMode) {
+      dispatch({ type: "AUTH_START" });
 
-  try {
-    const response = await authService.updateProfile(userData);
-    if (response.success && response.data) {
-      dispatch({ type: "SET_USER", payload: response.data.user });
-      toast.success(response.message || "Profilo aggiornato con successo!");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const updatedUser = { ...state.user!, ...userData };
+      dispatch({ type: "SET_USER", payload: updatedUser });
+      toast.success("🎭 Profilo demo aggiornato con successo!");
+      return;
     }
-  } catch (error: any) {
-    toast.error(error.message || "Errore durante l'aggiornamento");
-    throw error;
-  }
-};
+
+    try {
+      dispatch({ type: "AUTH_START" });
+
+      const response = await authService.updateProfile(userData);
+
+      if (response.success && response.data) {
+        dispatch({ type: "SET_USER", payload: response.data.user });
+
+        if (response.data.token) {
+          dispatch({
+            type: "AUTH_SUCCESS",
+            payload: {
+              token: response.data.token,
+              user: response.data.user,
+            },
+          });
+          updateTokenExpiration();
+        }
+
+        toast.success(response.message || "Profilo aggiornato con successo!");
+      } else {
+        throw new Error(response.message || "Aggiornamento fallito");
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.message || "Si è verificato un errore durante l'aggiornamento";
+      dispatch({ type: "AUTH_FAILURE", payload: errorMessage });
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
 
   const value: AuthContextType = {
     token: state.token,
@@ -512,6 +541,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isAuthenticated: !!state.token && !!state.user,
     tokenExpirationMinutes: state.tokenExpirationMinutes,
     serverTokenStatus: state.serverTokenStatus,
+    isDemoMode: state.isDemoMode,
     login,
     register,
     logout,
