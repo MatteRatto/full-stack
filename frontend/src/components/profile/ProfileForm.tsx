@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useAuth } from "@/context/AuthContext";
+import { useApi } from "@/hooks/useApi";
+import authService from "@/services/authService";
+import type { User } from "@/types/user.types";
 import {
   profileUpdateSchema,
   type ProfileUpdateFormData,
 } from "@/utils/validation";
-import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { useApi } from "@/hooks/useApi";
-import type { User } from "@/types/user.types";
 import PasswordInput from "../ui/passwordInput";
 
 const ProfileForm: React.FC = () => {
@@ -57,18 +58,15 @@ const ProfileForm: React.FC = () => {
         return;
       }
 
-      console.log("Making request to:", "/auth/profile");
-      console.log("With data:", updateData);
+      const response = await authService.updateProfile(updateData);
 
-      const response = await updateProfile("put", "/auth/profile", updateData);
-
-      if (response.user) {
-        setUser(response.user);
+      if (response.data && response.data.user) {
+        setUser(response.data.user);
         toast.success("Profilo aggiornato con successo!");
 
         reset({
-          name: response.user.name,
-          email: response.user.email,
+          name: response.data.user.name,
+          email: response.data.user.email,
           currentPassword: "",
           newPassword: "",
         });

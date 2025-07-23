@@ -11,7 +11,7 @@ import type {
   LoginRequest,
   RegisterRequest,
 } from "@/types/auth.types";
-import type { User } from "@/types/user.types";
+import type { UpdateUserData, User } from "@/types/user.types";
 import authService from "@/services/authService";
 import { toast } from "react-toastify";
 
@@ -484,6 +484,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+
+  const updateProfile = async (userData: UpdateUserData): Promise<void> => {
+  if (state.isDemoMode) {
+    const updatedUser = { ...state.user!, ...userData };
+    dispatch({ type: "SET_USER", payload: updatedUser });
+    toast.success("🎭 Profilo demo aggiornato con successo!");
+    return;
+  }
+
+  try {
+    const response = await authService.updateProfile(userData);
+    if (response.success && response.data) {
+      dispatch({ type: "SET_USER", payload: response.data.user });
+      toast.success(response.message || "Profilo aggiornato con successo!");
+    }
+  } catch (error: any) {
+    toast.error(error.message || "Errore durante l'aggiornamento");
+    throw error;
+  }
+};
+
   const value: AuthContextType = {
     token: state.token,
     user: state.user,
@@ -496,6 +517,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     logout,
     setUser,
     refreshToken,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

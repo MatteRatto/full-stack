@@ -1,4 +1,4 @@
-import type { User } from "./user.types";
+import type { UpdateUserData, User } from "./user.types";
 
 export interface LoginRequest {
   email: string;
@@ -16,6 +16,15 @@ export interface AuthResponse {
   message: string;
   data: {
     token: string;
+    user: User;
+  };
+}
+
+export interface UpdateProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    token?: string;
     user: User;
   };
 }
@@ -42,6 +51,7 @@ export interface AuthContextType {
   logout: () => void;
   setUser: (user: User | null) => void;
   refreshToken: () => Promise<boolean>;
+  updateProfile: (userData: UpdateUserData) => Promise<void>;
 }
 
 export interface AuthError {

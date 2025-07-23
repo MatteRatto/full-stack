@@ -3,10 +3,11 @@ import type {
   LoginRequest,
   RegisterRequest,
   AuthResponse,
+  UpdateProfileResponse,
   LogoutResponse,
   TokenStatus,
 } from "@/types/auth.types";
-import type { User } from "@/types/user.types";
+import type { User, UpdateUserData } from "@/types/user.types";
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
@@ -47,6 +48,28 @@ class AuthService {
     }
 
     throw new Error(response.error || "Registrazione fallita");
+  }
+
+  async updateProfile(userData: UpdateUserData): Promise<UpdateProfileResponse> {
+    const response = await apiService.put<{
+      token?: string;
+      user: User;
+    }>("/auth/profile", userData);
+
+    if (response.success && response.data) {
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+            if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+      }
+
+      return {
+        success: response.success,
+        message: response.message || "Profilo aggiornato con successo",
+        data: response.data, 
+      };
+    }
+
+    throw new Error(response.error || "Aggiornamento profilo fallito");
   }
 
   async logout(): Promise<LogoutResponse> {
@@ -91,9 +114,6 @@ class AuthService {
       if (response.success && response.data) {
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-
-        const savedToken = localStorage.getItem("token");
-        const newExpirationTime = this.getTokenExpirationTime();
 
         return {
           success: response.success,

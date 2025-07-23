@@ -19,7 +19,7 @@ router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
 
 router.get("/me", protect, autoRefresh, getMe);
-router.put("/profile", validateProfileUpdate, protect, updateProfile);
+router.put("/profile", protect, validateProfileUpdate, updateProfile);
 router.post("/logout", protect, logout);
 
 router.post("/refresh", protect, async (req, res, next) => {
@@ -40,7 +40,6 @@ router.post("/refresh", protect, async (req, res, next) => {
 
     const { getTokenExpirationMinutes } = require("../utils/jwtUtils");
     const newTokenMinutes = getTokenExpirationMinutes(newToken);
-
     res.status(200).json({
       success: true,
       message: "Token refreshed successfully",
@@ -52,6 +51,7 @@ router.post("/refresh", protect, async (req, res, next) => {
           email: req.user.email,
           created_at: req.user.created_at,
         },
+          tokenExpirationMinutes: newTokenMinutes, 
       },
     });
   } catch (error) {
