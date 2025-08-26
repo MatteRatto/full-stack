@@ -1,5 +1,10 @@
 import { HelmetProvider } from "react-helmet-async";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -31,7 +36,13 @@ function App() {
 
             <main className="flex-grow">
               <Routes>
-                <Route path={ROUTES.HOME} element={<Home />} />
+                <Route
+                  path="/"
+                  element={<Navigate to={ROUTES.LOGIN} replace />}
+                />
+
+                <Route path="/home" element={<Home />} />
+
                 <Route path={ROUTES.LOGIN} element={<Login />} />
                 <Route path={ROUTES.REGISTER} element={<Register />} />
                 <Route path={ROUTES.PROFILE} element={<Profile />} />
