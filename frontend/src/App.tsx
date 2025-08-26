@@ -19,7 +19,7 @@ import CreatePost from "./components/post/CreatePost";
 import EditPost from "./components/post/EditPost";
 import MyPosts from "./components/post/MyPost";
 import Posts from "./components/post/Post";
-import SinglePost from "./components/post/singlePost";
+import SinglePost from "./components/post/SinglePost";
 
 function App() {
   return (
