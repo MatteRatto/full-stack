@@ -141,6 +141,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   useEffect(() => {
+    (window as any).__IS_DEMO_MODE__ = state.isDemoMode;
+  }, [state.isDemoMode]);
+
+  useEffect(() => {
     const checkBackend = async () => {
       if (DEMO_MODE) {
         console.log("🎭 Demo mode attivata tramite variabile d'ambiente");
@@ -279,11 +283,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("Credenziali demo non valide");
       }
 
+      const demoUser =
+        credentials.email === "test@test.com"
+          ? { ...DEMO_USER, id: 2, name: "Test User", email: "test@test.com" }
+          : DEMO_USER;
+
       dispatch({
         type: "AUTH_SUCCESS",
         payload: {
           token: DEMO_TOKEN,
-          user: DEMO_USER,
+          user: demoUser,
         },
       });
 
@@ -295,6 +304,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           isNearExpiration: false,
         },
       });
+
+      localStorage.setItem("token", DEMO_TOKEN);
+      localStorage.setItem("user", JSON.stringify(demoUser));
 
       toast.success("🎭 Login demo effettuato con successo!");
       return;
@@ -360,6 +372,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       });
 
+      localStorage.setItem("token", DEMO_TOKEN);
+      localStorage.setItem("user", JSON.stringify(newDemoUser));
+
       toast.success("🎭 Registrazione demo completata con successo!");
       return;
     }
@@ -399,6 +414,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = async (): Promise<void> => {
     if (state.isDemoMode) {
       dispatch({ type: "AUTH_LOGOUT" });
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       toast.success("🎭 Logout demo effettuato con successo!");
       return;
     }
@@ -414,13 +431,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const setUser = (user: User | null): void => {
-    if (state.isDemoMode) {
-      if (user) {
-        dispatch({ type: "SET_USER", payload: user });
-      }
-      return;
-    }
-
     if (user) {
       dispatch({ type: "SET_USER", payload: user });
       localStorage.setItem("user", JSON.stringify(user));
@@ -498,6 +508,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       const updatedUser = { ...state.user!, ...userData };
       dispatch({ type: "SET_USER", payload: updatedUser });
+
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
       toast.success("🎭 Profilo demo aggiornato con successo!");
       return;
     }
@@ -533,6 +546,53 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       throw error;
     }
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+
+        if (state.isDemoMode || token === DEMO_TOKEN) {
+          dispatch({
+            type: "AUTH_SUCCESS",
+            payload: { token, user },
+          });
+          dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
+          dispatch({
+            type: "SET_SERVER_STATUS",
+            payload: {
+              minutesLeft: 30,
+              isNearExpiration: false,
+            },
+          });
+        } else {
+          const expirationMinutes = authService.getTokenExpirationTime();
+
+          if (expirationMinutes !== null && expirationMinutes <= 0) {
+            logout();
+            return;
+          }
+
+          dispatch({
+            type: "AUTH_SUCCESS",
+            payload: { token, user },
+          });
+          dispatch({
+            type: "SET_TOKEN_EXPIRATION",
+            payload: expirationMinutes,
+          });
+          updateServerStatus();
+        }
+      } catch (error) {
+        console.error("Error loading stored auth data:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+  }, [state.isDemoMode, updateServerStatus]);
 
   const value: AuthContextType = {
     token: state.token,

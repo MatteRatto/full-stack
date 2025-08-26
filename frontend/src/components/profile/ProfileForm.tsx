@@ -196,7 +196,6 @@ const ProfileForm: React.FC = () => {
                   error={errors.newPassword?.message}
                 />
 
-                {/* Helper text for password requirements */}
                 <p className="text-xs text-gray-500">
                   La password deve contenere almeno 6 caratteri con una
                   maiuscola, una minuscola e un numero

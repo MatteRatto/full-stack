@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
-import SessionExpirationModal from "./sessionExpiratedModal";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
+import SessionExpirationModal from "./sessionExpiratedModal";
 
 const SessionManager: React.FC = () => {
   const {
@@ -27,7 +27,6 @@ const SessionManager: React.FC = () => {
     const currentMinutes =
       serverTokenStatus?.minutesLeft ?? tokenExpirationMinutes;
 
-    // Se abbiamo appena refreshato e ora abbiamo più di 25 minuti, chiudi il modal
     if (refreshedRef.current && currentMinutes > 25) {
       console.log(
         "Token refreshed, closing modal. Minutes left:",
@@ -46,12 +45,10 @@ const SessionManager: React.FC = () => {
       return;
     }
 
-    // Non mostrare il modal se stiamo refreshando o abbiamo appena refreshato
     if (isRefreshing || refreshedRef.current) {
       return;
     }
 
-    // Show modal at critical times: 15, 10, 5, 2, 1 minutes
     const shouldShowModal =
       currentMinutes <= 15 &&
       currentMinutes > 0 &&
@@ -88,14 +85,11 @@ const SessionManager: React.FC = () => {
       if (result) {
         console.log("SessionManager: Token refresh successful");
 
-        // Imposta il flag per indicare che abbiamo refreshato
         refreshedRef.current = true;
 
-        // Chiudi il modal immediatamente
         setShowModal(false);
         setModalShownForMinute(null);
 
-        // Aspetta un momento per permettere all'AuthContext di aggiornare lo stato
         setTimeout(() => {
           console.log("SessionManager: Checking updated values...");
           console.log(

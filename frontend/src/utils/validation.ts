@@ -79,6 +79,20 @@ export const profileUpdateSchema = z
     }
   );
 
+export const postSchema = z.object({
+  title: z
+    .string()
+    .min(1, { message: "Il titolo è obbligatorio" })
+    .min(3, { message: "Il titolo deve essere di almeno 3 caratteri" })
+    .max(255, { message: "Il titolo non può superare i 255 caratteri" }),
+  content: z
+    .string()
+    .min(1, { message: "Il contenuto è obbligatorio" })
+    .min(10, { message: "Il contenuto deve essere di almeno 10 caratteri" })
+    .max(5000, { message: "Il contenuto non può superare i 5000 caratteri" }),
+});
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ProfileUpdateFormData = z.infer<typeof profileUpdateSchema>;
+export type PostFormData = z.infer<typeof postSchema>;

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -52,18 +52,6 @@ const Footer: React.FC = () => {
 
           <div className="hidden sm:block">
             <div className="mt-2 flex justify-center space-x-6">
-              <a
-                href="#"
-                className="text-gray-400 hover:text-gray-500 transition-colors"
-              >
-                Privacy Policy
-              </a>
-              <a
-                href="#"
-                className="text-gray-400 hover:text-gray-500 transition-colors"
-              >
-                Termini di Servizio
-              </a>
               <div className="relative" ref={contactsMenuRef}>
                 <button
                   onClick={() => setShowContactsMenu(!showContactsMenu)}
