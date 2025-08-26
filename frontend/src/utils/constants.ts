@@ -57,7 +57,7 @@ export const HTTP_STATUS = {
 } as const;
 
 export const ROUTES = {
-  HOME: "/home",
+  HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
   PROFILE: "/profile",
