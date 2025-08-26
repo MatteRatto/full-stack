@@ -95,7 +95,8 @@ class DemoPostsStorage {
       filteredPosts = filteredPosts.filter(
         (post) =>
           post.title.toLowerCase().includes(searchTerm) ||
-          post.content.toLowerCase().includes(searchTerm)
+          post.content.toLowerCase().includes(searchTerm) ||
+          post.author_name.toLowerCase().includes(searchTerm)
       );
     }
 

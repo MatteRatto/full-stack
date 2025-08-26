@@ -179,7 +179,7 @@ class Post {
     SELECT p.*, u.name as author_name, u.email as author_email
     FROM posts p
     JOIN users u ON p.user_id = u.id
-    WHERE p.title LIKE ? OR p.content LIKE ?
+    WHERE p.title LIKE ? OR p.content LIKE ? OR u.name LIKE ?
     ORDER BY p.created_at DESC
     LIMIT ${limitInt} OFFSET ${offset}
   `;
@@ -187,12 +187,17 @@ class Post {
     const searchPattern = `%${searchTerm}%`;
 
     try {
-      const [posts] = await pool.execute(query, [searchPattern, searchPattern]);
+      const [posts] = await pool.execute(query, [
+        searchPattern,
+        searchPattern,
+        searchPattern,
+      ]);
 
       const [countResult] = await pool.execute(
         `SELECT COUNT(*) as total FROM posts p
-       WHERE p.title LIKE ? OR p.content LIKE ?`,
-        [searchPattern, searchPattern]
+       JOIN users u ON p.user_id = u.id
+       WHERE p.title LIKE ? OR p.content LIKE ? OR u.name LIKE ?`,
+        [searchPattern, searchPattern, searchPattern]
       );
       const total = countResult[0].total;
 
