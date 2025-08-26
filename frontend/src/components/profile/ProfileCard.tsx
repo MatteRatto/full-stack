@@ -8,7 +8,7 @@ const ProfileCard: React.FC = () => {
   if (!user) {
     return (
       <div className="bg-white shadow-lg rounded-lg p-6">
-        <p className="text-gray-500">Dati utente non sono disponibili</p>
+        <p className="text-gray-500">Dati utente non disponibili</p>
       </div>
     );
   }
