@@ -7,10 +7,10 @@ const Login: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Accedi - Mr-App</title>
+        <title>Accedi - Mr app</title>
         <meta
           name="description"
-          content="Accedi al tuo account MyApp in modo sicuro"
+          content="Accedi al tuo account MR app in modo sicuro"
         />
       </Helmet>
 

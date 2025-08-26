@@ -92,8 +92,29 @@ const validateProfileUpdate = [
   handleValidationErrors,
 ];
 
+const validatePost = [
+  body("title")
+    .trim()
+    .not()
+    .isEmpty()
+    .withMessage("Il titolo è obbligatorio")
+    .isLength({ min: 3, max: 255 })
+    .withMessage("Il titolo deve essere tra 3 e 255 caratteri"),
+
+  body("content")
+    .trim()
+    .not()
+    .isEmpty()
+    .withMessage("Il contenuto è obbligatorio")
+    .isLength({ min: 10, max: 5000 })
+    .withMessage("Il contenuto deve essere tra 10 e 5000 caratteri"),
+
+  handleValidationErrors,
+];
+
 module.exports = {
   validateRegister,
   validateLogin,
   validateProfileUpdate,
+  validatePost,
 };

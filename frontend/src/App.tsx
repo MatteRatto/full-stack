@@ -15,6 +15,11 @@ import Register from "@/pages/Register";
 import Footer from "@/components/common/Footer";
 import Navbar from "@/components/common/Navbar";
 import SessionManager from "./components/common/sessionManager";
+import CreatePost from "./components/post/CreatePost";
+import EditPost from "./components/post/EditPost";
+import MyPosts from "./components/post/MyPost";
+import Posts from "./components/post/Post";
+import SinglePost from "./components/post/singlePost";
 
 function App() {
   return (
@@ -30,6 +35,11 @@ function App() {
                 <Route path={ROUTES.LOGIN} element={<Login />} />
                 <Route path={ROUTES.REGISTER} element={<Register />} />
                 <Route path={ROUTES.PROFILE} element={<Profile />} />
+                <Route path={ROUTES.POSTS} element={<Posts />} />
+                <Route path={ROUTES.CREATE_POST} element={<CreatePost />} />
+                <Route path={ROUTES.MY_POSTS} element={<MyPosts />} />
+                <Route path="/posts/:id" element={<SinglePost />} />
+                <Route path="/posts/edit/:id" element={<EditPost />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

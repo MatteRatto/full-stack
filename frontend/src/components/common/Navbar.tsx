@@ -1,8 +1,8 @@
+import LogoutButton from "@/components/auth/LogoutButton";
+import { useAuth } from "@/context/AuthContext";
+import { ROUTES } from "@/utils/constants";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import LogoutButton from "@/components/auth/LogoutButton";
-import { ROUTES } from "@/utils/constants";
 import TokenStatus from "./TokenStatus";
 
 const Navbar: React.FC = () => {
@@ -32,6 +32,19 @@ const Navbar: React.FC = () => {
                 <span className="text-gray-700 text-sm lg:hidden">
                   {user?.name}
                 </span>
+
+                <Link
+                  to={ROUTES.POSTS}
+                  className={`px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    isActive(ROUTES.POSTS) ||
+                    location.pathname.startsWith("/posts")
+                      ? "bg-primary-100 text-primary-700"
+                      : "text-gray-600 hover:text-primary-600 hover:bg-gray-50"
+                  }`}
+                >
+                  Post
+                </Link>
+
                 <Link
                   to={ROUTES.PROFILE}
                   className={`px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -122,6 +135,20 @@ const Navbar: React.FC = () => {
                 <div className="px-3 py-2 text-sm text-gray-500">
                   Ciao, {user?.name}
                 </div>
+
+                <Link
+                  to={ROUTES.POSTS}
+                  className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive(ROUTES.POSTS) ||
+                    location.pathname.startsWith("/posts")
+                      ? "bg-primary-100 text-primary-700"
+                      : "text-gray-600 hover:text-primary-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Post
+                </Link>
+
                 <Link
                   to={ROUTES.PROFILE}
                   className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
