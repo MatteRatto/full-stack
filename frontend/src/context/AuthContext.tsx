@@ -30,11 +30,37 @@ const isBackendAvailable = async (): Promise<boolean> => {
   }
 };
 
-const DEMO_USER: User = {
-  id: 1,
-  name: "Marco Bianchi",
-  email: "marco.bianchi@demo.com",
-  created_at: "2024-01-15T10:30:00Z",
+const getStoredDemoUser = (): User | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    return null;
+  }
+};
+
+const getDefaultDemoUser = (credentials?: LoginRequest): User => {
+  if (credentials) {
+    return {
+      id: 1,
+      name:
+        credentials.email === "demo@demo.com"
+          ? "Demo User"
+          : credentials.email === "marco.bianchi@demo.com"
+          ? "Marco Bianchi"
+          : "Test User",
+      email: credentials.email,
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  return {
+    id: 1,
+    name: "Marco Bianchi",
+    email: "marco.bianchi@demo.com",
+    created_at: "2024-01-15T10:30:00Z",
+  };
 };
 
 const DEMO_TOKEN = "demo-jwt-token-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
@@ -224,7 +250,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [updateTokenExpiration, updateServerStatus, state.isDemoMode]);
 
   useEffect(() => {
-    // RIMUOVI QUESTO BLOCCO - non caricare automaticamente utente in demo mode
     if (state.isDemoMode) {
       console.log("🎭 Demo mode attivata - utente deve fare login manualmente");
       return;
@@ -254,8 +279,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (credentials: LoginRequest): Promise<void> => {
     if (state.isDemoMode) {
       dispatch({ type: "AUTH_START" });
-
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const storedUser = getStoredDemoUser();
+      if (storedUser && credentials.email === storedUser.email) {
+        dispatch({
+          type: "AUTH_SUCCESS",
+          payload: {
+            token: DEMO_TOKEN,
+            user: storedUser,
+          },
+        });
+
+        dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
+        dispatch({
+          type: "SET_SERVER_STATUS",
+          payload: { minutesLeft: 30, isNearExpiration: false },
+        });
+
+        toast.success("🎭 Bentornato! Login demo con profilo aggiornato.");
+        return;
+      }
 
       const validDemoCredentials = [
         { email: "demo@demo.com", password: "demo123" },
@@ -281,21 +325,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("Credenziali demo non valide");
       }
 
+      const demoUser = getDefaultDemoUser(credentials);
+
       dispatch({
         type: "AUTH_SUCCESS",
         payload: {
           token: DEMO_TOKEN,
-          user: DEMO_USER,
+          user: demoUser,
         },
       });
 
       dispatch({ type: "SET_TOKEN_EXPIRATION", payload: 30 });
       dispatch({
         type: "SET_SERVER_STATUS",
-        payload: {
-          minutesLeft: 30,
-          isNearExpiration: false,
-        },
+        payload: { minutesLeft: 30, isNearExpiration: false },
       });
 
       toast.success("🎭 Login demo effettuato con successo!");
@@ -400,8 +443,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const logout = async (): Promise<void> => {
     if (state.isDemoMode) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
       dispatch({ type: "AUTH_LOGOUT" });
-      toast.success("🎭 Logout demo effettuato con successo!");
+      toast.success("🎭 Logout demo effettuato - credenziali resetate!");
       return;
     }
 
@@ -416,13 +461,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const setUser = (user: User | null): void => {
-    if (state.isDemoMode) {
-      if (user) {
-        dispatch({ type: "SET_USER", payload: user });
-      }
-      return;
-    }
-
     if (user) {
       dispatch({ type: "SET_USER", payload: user });
       localStorage.setItem("user", JSON.stringify(user));
@@ -495,12 +533,48 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const updateProfile = async (userData: UpdateUserData): Promise<void> => {
     if (state.isDemoMode) {
       dispatch({ type: "AUTH_START" });
-
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const updatedUser = { ...state.user!, ...userData };
-      dispatch({ type: "SET_USER", payload: updatedUser });
-      toast.success("🎭 Profilo demo aggiornato con successo!");
+      const updateData: Partial<User> = {};
+      let passwordChanged = false;
+
+      if (userData.name && userData.name.trim() !== state.user?.name) {
+        updateData.name = userData.name.trim();
+      }
+
+      if (userData.email && userData.email.trim() !== state.user?.email) {
+        updateData.email = userData.email.trim();
+      }
+
+      if (userData.newPassword && userData.currentPassword) {
+        console.log(
+          "🎭 Password cambiata in demo mode - usa le nuove credenziali al login"
+        );
+        passwordChanged = true;
+      } else if (userData.newPassword && !userData.currentPassword) {
+        dispatch({
+          type: "AUTH_FAILURE",
+          payload: "Password attuale richiesta",
+        });
+        toast.error("Password attuale richiesta per cambiarla");
+        throw new Error("Password attuale richiesta per cambiarla");
+      }
+
+      if (Object.keys(updateData).length === 0 && !passwordChanged) {
+        dispatch({ type: "AUTH_FAILURE", payload: "" });
+        toast.info("Nessuna modifica da salvare");
+        return;
+      }
+
+      const updatedUser = { ...state.user!, ...updateData };
+      setUser(updatedUser);
+      dispatch({ type: "AUTH_FAILURE", payload: "" });
+      const message =
+        passwordChanged || updateData.email
+          ? "🎭 Profilo aggiornato! Usa le nuove credenziali al prossimo login."
+          : "🎭 Profilo demo aggiornato con successo!";
+
+      toast.success(message);
       return;
     }
 
@@ -521,6 +595,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             },
           });
           updateTokenExpiration();
+        } else {
+          dispatch({ type: "AUTH_FAILURE", payload: "" });
         }
 
         toast.success(response.message || "Profilo aggiornato con successo!");

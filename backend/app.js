@@ -11,9 +11,30 @@ const errorHandler = require("./src/middleware/errorHandler");
 const app = express();
 
 app.use(helmet());
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL || "http://localhost:3000",
+        "https://full-stack-mr.netlify.app",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+      ];
+
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`❌ CORS blocked for origin: ${origin}`);
+        }
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );

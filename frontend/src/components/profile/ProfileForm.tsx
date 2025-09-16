@@ -1,8 +1,5 @@
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useAuth } from "@/context/AuthContext";
-import { useApi } from "@/hooks/useApi";
-import authService from "@/services/authService";
-import type { User } from "@/types/user.types";
 import {
   profileUpdateSchema,
   type ProfileUpdateFormData,
@@ -14,8 +11,7 @@ import { toast } from "react-toastify";
 import PasswordInput from "../ui/passwordInput";
 
 const ProfileForm: React.FC = () => {
-  const { user, setUser } = useAuth();
-  const { execute: updateProfile, loading } = useApi<{ user: User }>();
+  const { user, updateProfile: updateUserProfile, isLoading } = useAuth();
   const [showPasswordSection, setShowPasswordSection] = useState(false);
 
   const {
@@ -58,23 +54,17 @@ const ProfileForm: React.FC = () => {
         return;
       }
 
-      const response = await authService.updateProfile(updateData);
+      await updateUserProfile(updateData);
 
-      if (response.data && response.data.user) {
-        setUser(response.data.user);
-        toast.success("Profilo aggiornato con successo!");
-
-        reset({
-          name: response.data.user.name,
-          email: response.data.user.email,
-          currentPassword: "",
-          newPassword: "",
-        });
-      }
+      reset({
+        name: user?.name || "",
+        email: user?.email || "",
+        currentPassword: "",
+        newPassword: "",
+      });
     } catch (error: any) {
-      toast.error(
-        error.message || "Errore durante l'aggiornamento del profilo"
-      );
+      // Gli errori sono già gestiti nel context con toast
+      console.error("Profile update error:", error);
     }
   };
 
@@ -207,10 +197,10 @@ const ProfileForm: React.FC = () => {
           <div className="flex justify-end pt-2">
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? (
+              {isLoading ? (
                 <div className="flex items-center">
                   <LoadingSpinner size="sm" className="text-white mr-2" />
                   Aggiornamento...
