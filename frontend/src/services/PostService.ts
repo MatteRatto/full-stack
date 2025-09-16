@@ -6,28 +6,32 @@ import type {
 } from "@/types/post.types";
 import apiService from "./api";
 
-const DEMO_POSTS: Post[] = [
+const generateDemoPosts = (currentUser: {
+  id: number;
+  name: string;
+  email: string;
+}): Post[] => [
   {
     id: 1,
-    user_id: 1,
+    user_id: currentUser.id,
     title: "Benvenuto nella Demo!",
     content:
       "Questo è un post di esempio nella modalità demo. Puoi creare, modificare ed eliminare post liberamente. Tutti i dati sono memorizzati localmente e non vengono salvati su un server reale.",
     created_at: "2024-12-01T10:00:00Z",
     updated_at: "2024-12-01T10:00:00Z",
-    author_name: "Marco Bianchi",
-    author_email: "marco.bianchi@demo.com",
+    author_name: currentUser.name,
+    author_email: currentUser.email,
   },
   {
     id: 2,
-    user_id: 1,
+    user_id: currentUser.id,
     title: "Come funziona la modalità demo",
     content:
       "La modalità demo simula completamente il comportamento del backend. Puoi:\n\n• Creare nuovi post\n• Modificare i tuoi post esistenti\n• Eliminare post\n• Cercare tra i post\n• Navigare tra le pagine\n\nTutti i dati sono temporanei e verranno persi al refresh della pagina.",
     created_at: "2024-12-01T11:30:00Z",
     updated_at: "2024-12-01T11:30:00Z",
-    author_name: "Marco Bianchi",
-    author_email: "marco.bianchi@demo.com",
+    author_name: currentUser.name,
+    author_email: currentUser.email,
   },
   {
     id: 3,
@@ -42,20 +46,31 @@ const DEMO_POSTS: Post[] = [
   },
   {
     id: 4,
-    user_id: 1,
+    user_id: currentUser.id,
     title: "Funzionalità avanzate",
     content:
       "La demo include anche la paginazione e la ricerca. Prova a cercare 'demo' nella barra di ricerca per vedere come funziona il filtro dei contenuti.",
     created_at: "2024-12-01T08:45:00Z",
     updated_at: "2024-12-01T12:15:00Z",
-    author_name: "Marco Bianchi",
-    author_email: "marco.bianchi@demo.com",
+    author_name: currentUser.name,
+    author_email: currentUser.email,
   },
 ];
 
 class DemoPostsStorage {
-  private posts: Post[] = [...DEMO_POSTS];
-  private nextId: number = Math.max(...DEMO_POSTS.map((p) => p.id)) + 1;
+  private posts: Post[] = [];
+  private nextId: number = 5;
+  private initialized: boolean = false;
+
+  constructor() {}
+
+  private initializePosts(): void {
+    if (this.initialized) return;
+
+    const currentUser = this.getCurrentUser();
+    this.posts = generateDemoPosts(currentUser);
+    this.initialized = true;
+  }
 
   getCurrentUserId(): number {
     try {
@@ -88,6 +103,8 @@ class DemoPostsStorage {
     limit: number = 10,
     search?: string
   ): PostsResponse {
+    this.initializePosts();
+
     let filteredPosts = [...this.posts];
 
     if (search && search.trim()) {
@@ -123,6 +140,8 @@ class DemoPostsStorage {
   }
 
   getMyPosts(page: number = 1, limit: number = 10): PostsResponse {
+    this.initializePosts();
+
     const currentUserId = this.getCurrentUserId();
     const myPosts = this.posts.filter((post) => post.user_id === currentUserId);
 
@@ -149,10 +168,14 @@ class DemoPostsStorage {
   }
 
   getPostById(id: number): Post | null {
+    this.initializePosts();
+
     return this.posts.find((post) => post.id === id) || null;
   }
 
   createPost(postData: CreatePostData): Post {
+    this.initializePosts();
+
     const currentUser = this.getCurrentUser();
     const now = new Date().toISOString();
 
@@ -172,7 +195,10 @@ class DemoPostsStorage {
   }
 
   updatePost(id: number, postData: UpdatePostData): Post | null {
+    this.initializePosts();
+
     const currentUserId = this.getCurrentUserId();
+    const currentUser = this.getCurrentUser();
     const postIndex = this.posts.findIndex(
       (post) => post.id === id && post.user_id === currentUserId
     );
@@ -186,12 +212,16 @@ class DemoPostsStorage {
       title: postData.title,
       content: postData.content,
       updated_at: new Date().toISOString(),
+      author_name: currentUser.name,
+      author_email: currentUser.email,
     };
 
     return this.posts[postIndex];
   }
 
   deletePost(id: number): boolean {
+    this.initializePosts();
+
     const currentUserId = this.getCurrentUserId();
     const postIndex = this.posts.findIndex(
       (post) => post.id === id && post.user_id === currentUserId
@@ -206,8 +236,31 @@ class DemoPostsStorage {
   }
 
   resetToDefaults(): void {
-    this.posts = [...DEMO_POSTS];
-    this.nextId = Math.max(...DEMO_POSTS.map((p) => p.id)) + 1;
+    const currentUser = this.getCurrentUser();
+    this.posts = generateDemoPosts(currentUser);
+    this.initialized = true;
+  }
+
+  updateUserPostsInfo(userId: number, newName: string, newEmail: string): void {
+    this.posts = this.posts.map((post) => {
+      if (post.user_id === userId) {
+        return {
+          ...post,
+          author_name: newName,
+          author_email: newEmail,
+        };
+      }
+      return post;
+    });
+  }
+
+  syncWithUserProfile(): void {
+    const currentUser = this.getCurrentUser();
+    this.updateUserPostsInfo(
+      currentUser.id,
+      currentUser.name,
+      currentUser.email
+    );
   }
 }
 
@@ -223,6 +276,7 @@ class PostsService {
     } catch (e) {}
 
     const token = localStorage.getItem("token");
+
     const isDemoToken =
       token === "demo-jwt-token-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
 
@@ -230,7 +284,13 @@ class PostsService {
       return true;
     }
 
-    return import.meta.env.VITE_DEMO_MODE === "true";
+    const envDemo = import.meta.env.VITE_DEMO_MODE === "true";
+
+    if (!token) {
+      return true;
+    }
+
+    return envDemo;
   }
 
   async getAllPosts(
@@ -238,12 +298,17 @@ class PostsService {
     limit: number = 10,
     search?: string
   ): Promise<PostsResponse> {
-    if (this.isDemoMode()) {
+    const demoMode = this.isDemoMode();
+
+    if (demoMode) {
+      demoStorage.syncWithUserProfile();
+
       await new Promise((resolve) =>
         setTimeout(resolve, 500 + Math.random() * 500)
       );
 
-      return demoStorage.getAllPosts(page, limit, search);
+      const result = demoStorage.getAllPosts(page, limit, search);
+      return result;
     }
 
     const params = new URLSearchParams({
@@ -255,9 +320,9 @@ class PostsService {
       params.append("search", search);
     }
 
-    const response = await apiService.get<Post[]>(
-      `/posts?${params.toString()}`
-    );
+    const url = `/posts?${params.toString()}`;
+
+    const response = await apiService.get<Post[]>(url);
 
     if (response.success && response.data) {
       return {
@@ -279,6 +344,8 @@ class PostsService {
     limit: number = 10
   ): Promise<PostsResponse> {
     if (this.isDemoMode()) {
+      demoStorage.syncWithUserProfile();
+
       await new Promise((resolve) =>
         setTimeout(resolve, 400 + Math.random() * 300)
       );
@@ -312,6 +379,8 @@ class PostsService {
 
   async getPostById(id: number): Promise<Post> {
     if (this.isDemoMode()) {
+      demoStorage.syncWithUserProfile();
+
       await new Promise((resolve) =>
         setTimeout(resolve, 200 + Math.random() * 200)
       );
@@ -443,6 +512,12 @@ class PostsService {
       };
     }
     return null;
+  }
+
+  forceSyncDemoData(): void {
+    if (this.isDemoMode()) {
+      demoStorage.syncWithUserProfile();
+    }
   }
 }
 
